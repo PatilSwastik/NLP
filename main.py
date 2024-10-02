@@ -1,39 +1,57 @@
 import streamlit as st
-from transformers import PegasusForConditionalGeneration, PegasusTokenizer
+from txtai.pipeline import Summary, Textractor
+from PyPDF2 import PdfReader
 
-# Load the Pegasus Model and Tokenizer
-model_name = "google/pegasus-xsum"
-pegasus_tokenizer = PegasusTokenizer.from_pretrained(model_name)
-pegasus_model = PegasusForConditionalGeneration.from_pretrained(model_name)
+st.set_page_config(layout="wide")
 
-# Streamlit App Title
-st.title("Text Summarization Using NLP")
+@st.cache_resource
+def text_summary(text, maxlength=None):
+    #create summary instance
+    summary = Summary()
+    text = (text)
+    result = summary(text)
+    return result
 
-# Input Text Box
-input_text = st.text_area("Enter the text you want to summarize", height=300)
+def extract_text_from_pdf(file_path):
+    # Open the PDF file using PyPDF2
+    with open(file_path, "rb") as f:
+        reader = PdfReader(f)
+        page = reader.pages[0]
+        text = page.extract_text()
+    return text
 
-# Parameters for Summary
-min_len = st.slider("Minimum Summary Length", 10, 100, 30)
-max_len = st.slider("Maximum Summary Length", 50, 300, 150)
+choice = st.sidebar.selectbox("Select your choice", ["Summarize Text", "Summarize Document"])
 
-# Summarization Function
-def summarize_text(text, min_length, max_length):
-    tokens = pegasus_tokenizer(text, truncation=True, padding="longest", return_tensors="pt")
-    summary_ids = pegasus_model.generate(**tokens, min_length=min_length, max_length=max_length)
-    decoded_summary = pegasus_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
-    return decoded_summary
+if choice == "Summarize Text":
+    st.subheader("Summarize Text")
+    input_text = st.text_area("Enter your text here")
+    if input_text is not None:
+        if st.button("Summarize Text"):
+            col1, col2 = st.columns([1,1])
+            with col1:
+                st.markdown("**Your Input Text**")
+                st.info(input_text)
+            with col2:
+                st.markdown("**Summary Result**")
+                result = text_summary(input_text)
+                st.success(result)
 
-# Button to Generate Summary
-if st.button("Summarize"):
-    if input_text:
-        with st.spinner("Generating summary..."):
-            summary = summarize_text(input_text, min_len, max_len)
-            st.subheader("Summary:")
-            st.write(summary)
-    else:
-        st.warning("Please input text for summarization.")
-
-# Option to view the original text
-if st.checkbox("Show Original Text"):
-    st.subheader("Original Text:")
-    st.write(input_text)
+elif choice == "Summarize Document":
+    st.subheader("Summarize Document")
+    input_file = st.file_uploader("Upload your document here", type=['pdf'])
+    if input_file is not None:
+        if st.button("Summarize Document"):
+            with open("doc_file.pdf", "wb") as f:
+                f.write(input_file.getbuffer())
+            col1, col2 = st.columns([1,1])
+            with col1:
+                st.info("File uploaded successfully")
+                extracted_text = extract_text_from_pdf("doc_file.pdf")
+                st.markdown("**Extracted Text is Below:**")
+                st.info(extracted_text)
+            with col2:
+                st.markdown("**Summary Result**")
+                text = extract_text_from_pdf("doc_file.pdf")
+                doc_summary = text_summary(text)
+                st.success(doc_summary)
+                
