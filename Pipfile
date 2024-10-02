@@ -4,6 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+spacy = "*"
+pytextrank = "*"
+pytorch-lightning = "*"
+transformers = "*"
+sentencepiece = "*"
+pegasus = "*"
+streamlit = "*"
 
 [dev-packages]
 

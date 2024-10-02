@@ -1,5 +1,5 @@
 import streamlit as st
-from transformers import pipeline, PegasusForConditionalGeneration, PegasusTokenizer
+from transformers import PegasusForConditionalGeneration, PegasusTokenizer
 
 # Load the Pegasus Model and Tokenizer
 model_name = "google/pegasus-xsum"
